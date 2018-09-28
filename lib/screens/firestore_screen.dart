@@ -57,7 +57,7 @@ class _FirestoreScreenState extends State<FirestoreScreen> {
               Expanded(
                   flex: 3,
                   child: Center(
-                      child: (document['imagePath'] != null)
+                      child: (document['imagePath'] != null  && FileSystemEntity.typeSync(document['imagePath']) != FileSystemEntityType.notFound)
                           ? Image.file(File(document['imagePath']))
                           : Text(document['storage'] ?? "Noname"))),
               Expanded(

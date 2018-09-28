@@ -1,4 +1,4 @@
-package com.example.f2;
+package zhu.lingkai.locator;
 
 import android.os.Bundle;
 import io.flutter.app.FlutterActivity;

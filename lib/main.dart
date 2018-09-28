@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import './screens/dummy_screen.dart';
+// import './screens/dummy_screen.dart';
 import './screens/login_screen.dart' show LoginScreen;
 import './screens/firestore_screen.dart' show FirestoreScreen;
-import './screens/camera_screen.dart';
+// import './screens/camera_screen.dart';
 import './screens/image_picker_screen.dart';
-import 'package:camera/camera.dart';
+// import 'package:camera/camera.dart';
 
-List<CameraDescription> cameras;
+// List<CameraDescription> cameras;
 
 void main() async {
-  try {
-    cameras = await availableCameras();
-  } on CameraException catch (e) {
-    logError(e.code, e.description);
-  }
+  // try {
+  //   cameras = await availableCameras();
+  // } on CameraException catch (e) {
+  //   logError(e.code, e.description);
+  // }
   runApp(new MyApp());
 }
 
@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
         // When we navigate to the "/" route, build the FirstScreen Widget
         '/': (context) => _handleCurrentScreen(),
         // When we navigate to the "/second" route, build the SecondScreen Widget
-        '/second': (context) => CameraScreen(cameras: cameras),
+        // '/second': (context) => CameraScreen(cameras: cameras),
         '/pick': (context) => ImagePickerScreen(),
       },
       theme: new ThemeData(

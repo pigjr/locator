@@ -32,8 +32,8 @@ class _MyHomePageState extends State<ImagePickerScreen> {
 
   @override
   void initState() {
-    _data = widget.document.exists ? widget.document.data : new Map<String, dynamic>();
-    _image = _data.containsKey('imagePath') ? File(_data['imagePath']) : null;
+    _data = widget.document != null && widget.document.exists ? widget.document.data : new Map<String, dynamic>();
+    _image = _data.containsKey('imagePath') && FileSystemEntity.typeSync(_data['imagePath']) != FileSystemEntityType.notFound ? File(_data['imagePath']) : null;
     _storageController.text = _data['storage'];
     _itemsController.text = _data['items'];
     return super.initState();
