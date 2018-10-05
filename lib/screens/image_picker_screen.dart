@@ -5,7 +5,8 @@ import 'dart:async';
 import 'dart:io';
 
 class ImagePickerScreen extends StatefulWidget {
-  ImagePickerScreen({Key key, @optionalTypeArgs this.document}) : super(key: key);
+  ImagePickerScreen({Key key, @optionalTypeArgs this.document})
+      : super(key: key);
   final DocumentSnapshot document;
   @override
   _MyHomePageState createState() => new _MyHomePageState();
@@ -15,15 +16,18 @@ class _MyHomePageState extends State<ImagePickerScreen> {
   final _formKey = GlobalKey<FormState>();
   int currentStep = 0;
   File _image;
-  Map<String, dynamic> _data;// = new Map<String, String>();
-  Future getImage() async {
-    // var image = await ImagePicker.pickImage(source: ImageSource.gallery);
-    var image = await ImagePicker.pickImage(source: ImageSource.camera);
+  Map<String, dynamic> _data; // = new Map<String, String>();
+  Future getImage(bool useCamera) async {
+    final image = useCamera
+        ? await ImagePicker.pickImage(source: ImageSource.camera)
+        : await ImagePicker.pickImage(source: ImageSource.gallery);
 
-    setState(() {
-      _image = image;
-      _data['imagePath'] = image.path;
-    });
+    if (image != null) {
+      setState(() {
+        _image = image;
+        _data['imagePath'] = image.path;
+      });
+    }
   }
 
   // Form text controllers
@@ -32,8 +36,14 @@ class _MyHomePageState extends State<ImagePickerScreen> {
 
   @override
   void initState() {
-    _data = widget.document != null && widget.document.exists ? widget.document.data : new Map<String, dynamic>();
-    _image = _data.containsKey('imagePath') && FileSystemEntity.typeSync(_data['imagePath']) != FileSystemEntityType.notFound ? File(_data['imagePath']) : null;
+    _data = widget.document != null && widget.document.exists
+        ? widget.document.data
+        : new Map<String, dynamic>();
+    _image = _data.containsKey('imagePath') &&
+            FileSystemEntity.typeSync(_data['imagePath']) !=
+                FileSystemEntityType.notFound
+        ? File(_data['imagePath'])
+        : null;
     _storageController.text = _data['storage'];
     _itemsController.text = _data['items'];
     return super.initState();
@@ -123,13 +133,28 @@ class _MyHomePageState extends State<ImagePickerScreen> {
           content: Align(
               alignment: Alignment.centerLeft,
               child: _image == null
-                  ? RaisedButton.icon(
-                      onPressed: getImage,
-                      icon: Icon(Icons.camera),
-                      label: Text('Pick Image'),
-                    )
+                  ? Column(children: <Widget>[
+                      RaisedButton.icon(
+                        onPressed: () {
+                          getImage(true);
+                        },
+                        icon: Icon(Icons.camera),
+                        label: Text('Take Image'),
+                      ),
+                      Text("or"),
+                      RaisedButton.icon(
+                        onPressed: () {
+                          getImage(false);
+                        },
+                        icon: Icon(Icons.photo_album),
+                        label: Text('Pick Photo'),
+                      ),
+                    ])
                   : Image.file(_image))),
-      Step(isActive: true, title: Text("Storage Name"), content: containerSection),
+      Step(
+          isActive: true,
+          title: Text("Storage Name"),
+          content: containerSection),
       Step(isActive: true, title: Text("Floor"), content: floorSection),
       Step(isActive: true, title: Text("Room"), content: roomSection),
       Step(isActive: true, title: Text("Items"), content: itemsSection),
@@ -137,7 +162,7 @@ class _MyHomePageState extends State<ImagePickerScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add a Storage and Items'),
+        title: Text(_data['storage'] ?? 'New Storage'),
       ),
       body: Form(
           key: _formKey,
@@ -182,8 +207,7 @@ class _MyHomePageState extends State<ImagePickerScreen> {
                   FocusScope.of(context).requestFocus(new FocusNode());
                 } else {
                   String missingValues = '';
-                  ['floor', 'room', 'storage', 'items']
-                      .forEach((k) {
+                  ['floor', 'room', 'storage', 'items'].forEach((k) {
                     if (!_data.containsKey(k) || _data[k].isEmpty) {
                       missingValues += k + ' ';
                     }

@@ -64,7 +64,6 @@ class MyApp extends StatelessWidget {
           // } else {
             if (snapshot.hasData) {
               return new FirestoreScreen(
-                  title: "Your Items",
                   firestore: _auth,
                   uuid: snapshot.data.uid);
             }

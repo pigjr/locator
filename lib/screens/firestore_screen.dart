@@ -3,13 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:io';
-import './splash_screen.dart' show SplashScreen;
 import './image_picker_screen.dart';
 
 class FirestoreScreen extends StatefulWidget {
-  FirestoreScreen({Key key, this.title, this.firestore, this.uuid})
+  FirestoreScreen({Key key, this.firestore, this.uuid})
       : super(key: key);
-  final String title;
   final FirebaseAuth firestore;
   final String uuid;
   @override
@@ -118,7 +116,7 @@ class _FirestoreScreenState extends State<FirestoreScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: new Text(widget.title), actions: <Widget>[
+      appBar: AppBar(title: new Text("Your Items"), actions: <Widget>[
         IconButton(
           icon: Icon(Icons.exit_to_app),
           onPressed: _signoutWithGoogle,
