@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -5,9 +6,10 @@ import 'dart:async';
 import 'dart:io';
 
 class ImagePickerScreen extends StatefulWidget {
-  ImagePickerScreen({Key key, @optionalTypeArgs this.document})
+  ImagePickerScreen({Key key, @optionalTypeArgs this.document, this.config})
       : super(key: key);
   final DocumentSnapshot document;
+  final DocumentSnapshot config;
   @override
   _MyHomePageState createState() => new _MyHomePageState();
 }
@@ -36,6 +38,7 @@ class _MyHomePageState extends State<ImagePickerScreen> {
 
   @override
   void initState() {
+    print(widget.config.data);
     _data = widget.document != null && widget.document.exists
         ? widget.document.data
         : new Map<String, dynamic>();
@@ -62,54 +65,60 @@ class _MyHomePageState extends State<ImagePickerScreen> {
         });
       },
     );
+    final _stories = json.decode(widget.config.data['stories']) as Map;
     Widget floorSection = Column(
-      children: <Widget>[
-        new RadioListTile(
-          title: const Text('Basement'),
-          value: 'Basement',
-          groupValue: _data['floor'],
-          onChanged: (value) {
-            setState(() {
-              _data['floor'] = value;
-            });
-          },
-        ),
-        new RadioListTile(
-          title: const Text('First Floor'),
-          value: 'First Floor',
-          groupValue: _data['floor'],
-          onChanged: (value) {
-            setState(() {
-              _data['floor'] = value;
-            });
-          },
-        ),
-      ],
-    );
+        children: _stories.keys
+            .map<Widget>((story) => RadioListTile(
+                  title: Text(story),
+                  value: story,
+                  groupValue: _data['floor'],
+                  onChanged: (value) {
+                    setState(() {
+                      _data['floor'] = value;
+                    });
+                  },
+                ))
+            .toList());
+    print(_stories[_data['floor']]);
+    var _rooms = _stories[_data['floor']] as List;
     Widget roomSection = Column(
-      children: <Widget>[
-        new RadioListTile(
-          title: const Text('Basement'),
-          value: 'Basement',
-          groupValue: _data['room'],
-          onChanged: (value) {
-            setState(() {
-              _data['room'] = value;
-            });
-          },
-        ),
-        new RadioListTile(
-          title: const Text('Kitchen'),
-          value: 'Kitchen',
-          groupValue: _data['room'],
-          onChanged: (value) {
-            setState(() {
-              _data['room'] = value;
-            });
-          },
-        ),
-      ],
-    );
+        children: _rooms != null ?
+            _rooms.map<Widget>(
+              (room) => RadioListTile(
+                    title: Text(room),
+                    value: room,
+                    groupValue: _data['room'],
+                    onChanged: (value) {
+                      setState(() {
+                        _data['room'] = value;
+                      });
+                    },
+                  ),
+            )
+            .toList() : []
+        // <Widget>[
+        //   RadioListTile(
+        //     title: const Text('Basement'),
+        //     value: 'Basement',
+        //     groupValue: _data['room'],
+        //     onChanged: (value) {
+        //       setState(() {
+        //         _data['room'] = value;
+        //       });
+        //     },
+        //   ),
+        //   RadioListTile(
+        //     title: const Text('Kitchen'),
+        //     value: 'Kitchen',
+        //     groupValue: _data['room'],
+        //     onChanged: (value) {
+        //       setState(() {
+        //         _data['room'] = value;
+        //       });
+        //     },
+        //   ),
+        // ],
+        );
     Widget itemsSection = Column(children: [
       TextField(
         decoration: new InputDecoration(
