@@ -5,20 +5,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import 'dart:io';
 
-class ImagePickerScreen extends StatefulWidget {
-  ImagePickerScreen({Key key, @optionalTypeArgs this.document, this.config})
+class StorageScreen extends StatefulWidget {
+  StorageScreen({Key key, @optionalTypeArgs this.document, this.config})
       : super(key: key);
   final DocumentSnapshot document;
   final DocumentSnapshot config;
   @override
-  _MyHomePageState createState() => new _MyHomePageState();
+  _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<ImagePickerScreen> {
+class _MyHomePageState extends State<StorageScreen> {
   final _formKey = GlobalKey<FormState>();
   int currentStep = 0;
   File _image;
-  Map<String, dynamic> _data; // = new Map<String, String>();
+  Map<String, dynamic> _data; // = Map<String, String>();
   Future getImage(bool useCamera) async {
     final image = useCamera
         ? await ImagePicker.pickImage(source: ImageSource.camera)
@@ -38,10 +38,9 @@ class _MyHomePageState extends State<ImagePickerScreen> {
 
   @override
   void initState() {
-    print(widget.config.data);
     _data = widget.document != null && widget.document.exists
         ? widget.document.data
-        : new Map<String, dynamic>();
+        : Map<String, dynamic>();
     _image = _data.containsKey('imagePath') &&
             FileSystemEntity.typeSync(_data['imagePath']) !=
                 FileSystemEntityType.notFound
@@ -55,7 +54,7 @@ class _MyHomePageState extends State<ImagePickerScreen> {
   @override
   Widget build(BuildContext context) {
     Widget containerSection = TextField(
-      decoration: new InputDecoration(
+      decoration: InputDecoration(
         hintText: "Name the Storage Location",
       ),
       controller: _storageController,
@@ -121,7 +120,7 @@ class _MyHomePageState extends State<ImagePickerScreen> {
         );
     Widget itemsSection = Column(children: [
       TextField(
-        decoration: new InputDecoration(
+        decoration: InputDecoration(
           hintText: "Items in this storage, one per line",
         ),
         keyboardType: TextInputType.multiline,
@@ -171,12 +170,12 @@ class _MyHomePageState extends State<ImagePickerScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_data['storage'] ?? 'New Storage'),
+        title: Text(_data['storage'] ?? 'Storage'),
       ),
       body: Form(
           key: _formKey,
           // autovalidate: true,
-          child: new Stepper(
+          child: Stepper(
             // Using a variable here for handling the currentStep
             currentStep: this.currentStep,
             // List the steps you would like to have
@@ -213,7 +212,7 @@ class _MyHomePageState extends State<ImagePickerScreen> {
                 // going back one step i.e adding 1, until its the length of the step
                 if (currentStep < mySteps.length - 1) {
                   currentStep = currentStep + 1;
-                  FocusScope.of(context).requestFocus(new FocusNode());
+                  FocusScope.of(context).requestFocus(FocusNode());
                 } else {
                   String missingValues = '';
                   ['floor', 'room', 'storage', 'items'].forEach((k) {
@@ -227,9 +226,9 @@ class _MyHomePageState extends State<ImagePickerScreen> {
                   } else {
                     showDialog(
                         context: context,
-                        builder: (_) => new AlertDialog(
-                              title: new Text("Missing Input"),
-                              content: new Text(
+                        builder: (_) => AlertDialog(
+                              title: Text("Missing Input"),
+                              content: Text(
                                   "Please input values to these fields: " +
                                       missingValues),
                             ));

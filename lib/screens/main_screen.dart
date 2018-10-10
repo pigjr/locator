@@ -4,18 +4,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:io';
-import './image_picker_screen.dart';
+import './storage_screen.dart';
+import './residence_screen.dart';
 import '../constants/preset.dart';
 
-class FirestoreScreen extends StatefulWidget {
-  FirestoreScreen({Key key, this.firestore, this.uuid}) : super(key: key);
+class MainScreen extends StatefulWidget {
+  MainScreen({Key key, this.firestore, this.uuid}) : super(key: key);
   final FirebaseAuth firestore;
   final String uuid;
   @override
-  _FirestoreScreenState createState() => new _FirestoreScreenState();
+  _MainScreenState createState() => _MainScreenState();
 }
 
-class _FirestoreScreenState extends State<FirestoreScreen>
+class _MainScreenState extends State<MainScreen>
     with SingleTickerProviderStateMixin {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
@@ -24,12 +25,11 @@ class _FirestoreScreenState extends State<FirestoreScreen>
   final _searchTextController = TextEditingController();
   final _config = Map<String, dynamic>();
   final _preset = Preset();
-  TabController _tabController;
+  // TabController _tabController;
 
   @override
   void initState() {
     _searchTextController.text = _searchText;
-    _tabController = new TabController(vsync: this, length: 2);
     _config['houseType'] = 'Two-story House';
     _config['stories'] = json.encode(_preset.houseTypes['Two-story House']);
     return super.initState();
@@ -45,20 +45,21 @@ class _FirestoreScreenState extends State<FirestoreScreen>
     return Chip(label: Text(item));
   }
 
-  Widget _buildListItem(BuildContext context, DocumentSnapshot document, config) {
+  Widget _buildListItem(
+      BuildContext context, DocumentSnapshot document, config) {
     final List<String> items = (document['items'] as String).isNotEmpty
         ? document['items'].trim().split(RegExp(r"\s+"))
         : [];
     return InkWell(
       child: Card(
-        key: new ValueKey(document.documentID),
-        child: new Container(
-          decoration: new BoxDecoration(
-              // border: new Border.all(color: const Color(0x80000000)),
-              // borderRadius: new BorderRadius.circular(5.0),
+        key: ValueKey(document.documentID),
+        child: Container(
+          decoration: BoxDecoration(
+              // border: Border.all(color: Colors.green),
+              borderRadius: BorderRadius.circular(5.0),
               ),
           padding: const EdgeInsets.all(10.0),
-          child: new Column(
+          child: Column(
             children: <Widget>[
               Expanded(
                   flex: 3,
@@ -94,14 +95,15 @@ class _FirestoreScreenState extends State<FirestoreScreen>
     );
   }
 
-  _navigateAndPushEditScreen(
-      BuildContext context, DocumentSnapshot document, DocumentSnapshot config) async {
+  _navigateAndPushEditScreen(BuildContext context, DocumentSnapshot document,
+      DocumentSnapshot config) async {
     // Navigator.push returns a Future that will complete after we call
     // Navigator.pop on the Selection Screen!
     final saveData = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ImagePickerScreen(document: document, config: config),
+        builder: (context) =>
+            StorageScreen(document: document, config: config),
       ),
     );
     if (saveData != null) {
@@ -114,13 +116,16 @@ class _FirestoreScreenState extends State<FirestoreScreen>
     // Scaffold.of(context).showSnackBar(SnackBar(content: Text("$saveResult")));
   }
 
-  _navigateAndPushPickScreen(BuildContext context, DocumentSnapshot config) async {
+  _navigateAndPushPickScreen(
+      BuildContext context, DocumentSnapshot config) async {
     // Navigator.push returns a Future that will complete after we call
     // Navigator.pop on the Selection Screen!
-    final saveData =
-        await Navigator.push(context, MaterialPageRoute(
-        builder: (context) => ImagePickerScreen(document: null, config: config),
-      )) as Map<String, dynamic>;
+    final saveData = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              StorageScreen(document: null, config: config),
+        )) as Map<String, dynamic>;
     // After the Selection Screen returns a result, show it in a Snackbar!
     if (saveData != null) {
       saveData['author'] = widget.uuid;
@@ -129,12 +134,57 @@ class _FirestoreScreenState extends State<FirestoreScreen>
     // Scaffold.of(context).showSnackBar(SnackBar(content: Text("$saveResult")));
   }
 
-  _itemsScaffold(BuildContext context, config) {
+  _navigateAndPushResidenceScreen(
+      BuildContext context, DocumentSnapshot config) async {
+    // Navigator.push returns a Future that will complete after we call
+    // Navigator.pop on the Selection Screen!
+    final saveData = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              ResidenceScreen(config: config),
+        )) as Map<String, dynamic>;
+    if (saveData != null) {
+      saveData['author'] = widget.uuid;
+      await Firestore.instance
+          .collection('configurations')
+          .document(config.reference.documentID)
+          .updateData(saveData);
+    }
+  }
+
+  _itemsScaffold(BuildContext context, DocumentSnapshot config) {
+    void _select(String choice) {
+      // Causes the app to rebuild with the _selectedChoice.
+      switch (choice) {
+        case "signOut":
+          _signoutWithGoogle();
+          break;
+        default:
+      }
+    }
     return Scaffold(
-      appBar: AppBar(title: new Text("Your Items"), actions: <Widget>[
+      appBar: AppBar(title: Text("Your Items"), actions: <Widget>[
+        // action button
         IconButton(
-          icon: Icon(Icons.exit_to_app),
-          onPressed: _signoutWithGoogle,
+          icon: Icon(Icons.home),
+          onPressed: () {
+            _navigateAndPushResidenceScreen(context, config);
+          },
+        ),
+        // overflow menu
+        PopupMenuButton(
+          onSelected: _select,
+          itemBuilder: (BuildContext context) {
+            return [
+              PopupMenuItem(
+                  value: "signOut",
+                  child: ListTile(
+                    leading: Icon(Icons.exit_to_app),
+                    title: Text('Sign out'),
+                  ))
+            ];
+          },
         ),
       ]),
       body: StreamBuilder(
@@ -156,7 +206,7 @@ class _FirestoreScreenState extends State<FirestoreScreen>
               Container(
                   padding: const EdgeInsets.all(10.0),
                   child: TextField(
-                    decoration: new InputDecoration(
+                    decoration: InputDecoration(
                         hintText: "What item are you looking for?",
                         prefixIcon: Icon(
                           Icons.search,
@@ -192,17 +242,17 @@ class _FirestoreScreenState extends State<FirestoreScreen>
                         ))
                       : GridView.builder(
                           gridDelegate:
-                              new SliverGridDelegateWithFixedCrossAxisCount(
+                              SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: 2),
                           itemCount: filteredDocuments.length,
                           padding: const EdgeInsets.all(10.0),
                           // itemExtent: 55.0,
-                          itemBuilder: (context, index) =>
-                              _buildListItem(context, filteredDocuments[index], config),
+                          itemBuilder: (context, index) => _buildListItem(
+                              context, filteredDocuments[index], config),
                         )),
             ]);
           }),
-      floatingActionButton: new Builder(
+      floatingActionButton: Builder(
         // Create an inner BuildContext so that the onPressed methods
         // can refer to the Scaffold with Scaffold.of().
         builder: (BuildContext context) {
@@ -221,115 +271,6 @@ class _FirestoreScreenState extends State<FirestoreScreen>
     );
   }
 
-  _getChips(List rooms) {
-    final _chips = rooms.map<Widget>((room) {
-      return InputChip(
-          key: ValueKey<String>(room),
-          // avatar: CircleAvatar(
-          //   backgroundImage: _nameToAvatar(name),
-          // ),
-          label: Text(room),
-          onDeleted: () {
-            setState(() {
-              // _removeTool(name);
-            });
-          });
-    }).toList();
-    _chips.add(InputChip(
-      label: Text('+'),
-      onPressed: () {},
-    ));
-    return _chips;
-  }
-
-  _wizardScaffold(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-          title: new Text("Your Home"),
-          bottom: TabBar(
-            controller: _tabController,
-            tabs: [
-              Tab(
-                text: "House Type",
-                icon: Icon(Icons.layers),
-              ),
-              Tab(text: "Rooms", icon: Icon(Icons.crop_square)),
-            ],
-          )),
-      body: TabBarView(
-        controller: _tabController,
-        children: <Widget>[
-          Column(
-              children: _preset.houseTypes.keys
-                  .map((s) => RadioListTile(
-                        subtitle: Text(s),
-                        title: Text(s),
-                        value: s,
-                        groupValue: _config['houseType'],
-                        onChanged: (value) {
-                          setState(() {
-                            _config['houseType'] = value;
-                          });
-                          setState(() {
-                            _config['stories'] =
-                                json.encode(_preset.houseTypes[value]);
-                          });
-                        },
-                      ))
-                  .toList()),
-          ListView(
-              children: json
-                  .decode(_config['stories'])
-                  .entries
-                  .map<Widget>((MapEntry story) => Card(
-                          child: Column(
-                        children: <Widget>[
-                          Text(
-                            story.key,
-                            textScaleFactor: 1.5,
-                          ),
-                          Wrap(
-                            children: _getChips(story.value),
-                          )
-                        ],
-                      )))
-                  .toList()),
-        ],
-      ),
-      floatingActionButton: new Builder(
-        // Create an inner BuildContext so that the onPressed methods
-        // can refer to the Scaffold with Scaffold.of().
-        builder: (BuildContext context) {
-          return FloatingActionButton(
-            heroTag: "confirm",
-            child: Icon(
-              Icons.confirmation_number,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              _saveConfig(context);
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  _saveConfig(BuildContext context) async {
-    // Navigator.push returns a Future that will complete after we call
-    // Navigator.pop on the Selection Screen!
-    final saveData = _config;
-    // After the Selection Screen returns a result, show it in a Snackbar!
-    if (saveData != null) {
-      saveData['author'] = widget.uuid;
-      await Firestore.instance
-          .collection('configurations')
-          .document()
-          .setData(saveData);
-    }
-    // Scaffold.of(context).showSnackBar(SnackBar(content: Text("$saveResult")));
-  }
-
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
@@ -344,7 +285,8 @@ class _FirestoreScreenState extends State<FirestoreScreen>
             );
           }
           if ((snapshot.data.documents as List).isEmpty) {
-            return _wizardScaffold(context);
+            return ResidenceScreen(initSetup: true, firestore: widget.firestore, uuid: widget.uuid,);
+            // return _wizardScaffold(context);
           } else {
             return _itemsScaffold(context, snapshot.data.documents[0]);
           }

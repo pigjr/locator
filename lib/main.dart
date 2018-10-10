@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 // import './screens/dummy_screen.dart';
 import './screens/login_screen.dart' show LoginScreen;
-import './screens/firestore_screen.dart' show FirestoreScreen;
+import './screens/main_screen.dart' show MainScreen;
 // import './screens/camera_screen.dart';
-import './screens/image_picker_screen.dart';
+// import './screens/storage_screen.dart';
 // import 'package:camera/camera.dart';
 
 // List<CameraDescription> cameras;
@@ -15,7 +15,7 @@ void main() async {
   // } on CameraException catch (e) {
   //   logError(e.code, e.description);
   // }
-  runApp(new MyApp());
+  runApp(MyApp());
 }
 
 void logError(String code, String message) =>
@@ -26,17 +26,15 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return new MaterialApp(
-      title: 'Flutter Demo',
+    return MaterialApp(
+      title: 'Expose',
       initialRoute: '/',
       routes: {
         // When we navigate to the "/" route, build the FirstScreen Widget
         '/': (context) => _handleCurrentScreen(),
-        // When we navigate to the "/second" route, build the SecondScreen Widget
-        // '/second': (context) => CameraScreen(cameras: cameras),
-        '/pick': (context) => ImagePickerScreen(),
+        // '/pick': (context) => StorageScreen(),
       },
-      theme: new ThemeData(
+      theme: ThemeData(
         // This is the theme of your application.
         //
         // Try running your application with "flutter run". You'll see the
@@ -48,14 +46,12 @@ class MyApp extends StatelessWidget {
         // primaryColor: Colors.blue,
         primarySwatch: Colors.green,
       ),
-      // home: _handleCurrentScreen(),
-      // home: new LoginScreen(title: 'Flutter Demo Home Page'),
     );
   }
 
   Widget _handleCurrentScreen() {
     final FirebaseAuth _auth = FirebaseAuth.instance;
-    return new StreamBuilder<FirebaseUser>(
+    return StreamBuilder<FirebaseUser>(
         stream: _auth.onAuthStateChanged,
         builder: (BuildContext context, snapshot) {
           // if (snapshot.connectionState == ConnectionState.waiting) {
@@ -63,7 +59,7 @@ class MyApp extends StatelessWidget {
           //   return DummyScreen(title: '1Test');
           // } else {
             if (snapshot.hasData) {
-              return new FirestoreScreen(
+              return MainScreen(
                   firestore: _auth,
                   uuid: snapshot.data.uid);
             }
