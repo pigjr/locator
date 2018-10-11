@@ -21,6 +21,8 @@ class _ResidenceScreenState extends State<ResidenceScreen>
   final _config = Map<String, dynamic>();
   final _preset = Preset();
   TabController _tabController;
+  final _addRoomTextInputController = TextEditingController();
+  String _addRoomTextInputValue;
 
   @override
   void initState() {
@@ -32,6 +34,7 @@ class _ResidenceScreenState extends State<ResidenceScreen>
       _config['stories'] = json.encode(_preset.houseTypes['Two-story House']);
     }
     _tabController = TabController(vsync: this, length: 2);
+    _addRoomTextInputController.text = _addRoomTextInputValue;
     return super.initState();
   }
 
@@ -53,7 +56,42 @@ class _ResidenceScreenState extends State<ResidenceScreen>
     }).toList();
     _chips.add(InputChip(
       label: Text('+'),
-      onPressed: () {},
+      onPressed: () {
+        showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+                    title: Text("Add a Room"),
+                    content: TextField(
+                      decoration: InputDecoration(
+                        hintText: "Room Name",
+                      ),
+                      controller: _addRoomTextInputController,
+                      onChanged: (value) {
+                        setState(() {
+                          _addRoomTextInputValue = value;
+                        });
+                      },
+                    ),
+                    actions: <Widget>[
+                      FlatButton.icon(
+                        icon: const Icon(Icons.save_alt, size: 18.0),
+                        label: const Text('Save'),
+                        onPressed: () {
+                          Navigator.pop(context, _addRoomTextInputValue);
+                        },
+                      ),
+                    ])).then((value) {
+          if (value != null) {
+            final _newStories = json.decode(_config['stories']);
+            (_newStories[storey] as List).add(_addRoomTextInputValue);
+            setState(() {
+              _config['stories'] = json.encode(_newStories);
+            });
+            _addRoomTextInputValue = null;
+            _addRoomTextInputController.clear();
+          }
+        });
+      },
     ));
     return _chips;
   }
