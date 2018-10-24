@@ -7,6 +7,7 @@ import 'dart:io';
 import './storage_screen.dart';
 import './residence_screen.dart';
 import '../constants/preset.dart';
+import '../utilities/string_to_color.dart' show stringToColor;
 
 class MainScreen extends StatefulWidget {
   MainScreen({Key key, this.firestore, this.uuid}) : super(key: key);
@@ -35,29 +36,50 @@ class _MainScreenState extends State<MainScreen>
     return super.initState();
   }
 
+  @override
+  void dispose() {
+    _searchTextController.dispose();
+    super.dispose();
+  }
+
   void _signoutWithGoogle() async {
     await _googleSignIn.disconnect();
     await widget.firestore.signOut();
   }
 
-  Widget _buildChip(BuildContext context, String item) {
-    // return Text(item);
-    return Chip(label: Text(item));
+  Widget _buildChip(BuildContext context, String item, String room) {
+    final _colors = room != null
+        ? stringToColor(room)
+        : [Colors.lightGreenAccent, Colors.black];
+    return Container(
+        margin: EdgeInsets.only(right: 2.0),
+        child: Chip(
+          label: Text(
+            item,
+            style: TextStyle(color: _colors[1]),
+          ),
+          backgroundColor: _colors[0],
+        ));
   }
 
   Widget _buildListItem(
       BuildContext context, DocumentSnapshot document, config) {
     final List<String> items = (document['items'] as String).isNotEmpty
-        ? document['items'].trim().split(RegExp(r"\s+"))
+        ? document['items'].trim().split(RegExp(r"\|"))
         : [];
     return InkWell(
       child: Card(
         key: ValueKey(document.documentID),
         child: Container(
           decoration: BoxDecoration(
-              // border: Border.all(color: Colors.green),
-              borderRadius: BorderRadius.circular(5.0),
-              ),
+            border: BorderDirectional(
+                bottom: BorderSide(
+                    color: document['storey'] != null
+                        ? stringToColor(document['storey'])[0]
+                        : Colors.white,
+                    width: 2.5)),
+            // borderRadius: BorderRadius.circular(1.0),
+          ),
           padding: const EdgeInsets.all(10.0),
           child: Column(
             children: <Widget>[
@@ -69,15 +91,18 @@ class _MainScreenState extends State<MainScreen>
                                       document['imagePath']) !=
                                   FileSystemEntityType.notFound)
                           ? Image.file(File(document['imagePath']))
-                          : Text(document['storage'] ?? "Noname"))),
+                          : Container(
+                              constraints: BoxConstraints.expand(),
+                              alignment: AlignmentDirectional.center,
+                              child: Text(document['storage'] ?? "???",
+                                  style: Theme.of(context).textTheme.title)))),
               Expanded(
                   flex: 1,
                   child: ListView.builder(
-                    // shrinkWrap: true,
                     scrollDirection: Axis.horizontal,
                     itemCount: items.length,
                     itemBuilder: (context, index) =>
-                        _buildChip(context, items[index]),
+                        _buildChip(context, items[index], document['room']),
                   ))
             ],
           ),
@@ -86,12 +111,6 @@ class _MainScreenState extends State<MainScreen>
       onTap: () {
         _navigateAndPushEditScreen(context, document, config);
       },
-      // onTap: () => Firestore.instance.runTransaction((transaction) async {
-      //       DocumentSnapshot freshSnap =
-      //           await transaction.get(document.reference);
-      //       // await transaction
-      //       //     .update(freshSnap.reference, {'votes': freshSnap['votes'] + 1});
-      //     }),
     );
   }
 
@@ -102,8 +121,7 @@ class _MainScreenState extends State<MainScreen>
     final saveData = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            StorageScreen(document: document, config: config),
+        builder: (context) => StorageScreen(document: document, config: config),
       ),
     );
     if (saveData != null) {
@@ -123,8 +141,7 @@ class _MainScreenState extends State<MainScreen>
     final saveData = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              StorageScreen(document: null, config: config),
+          builder: (context) => StorageScreen(document: null, config: config),
         )) as Map<String, dynamic>;
     // After the Selection Screen returns a result, show it in a Snackbar!
     if (saveData != null) {
@@ -141,8 +158,7 @@ class _MainScreenState extends State<MainScreen>
     final saveData = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              ResidenceScreen(config: config),
+          builder: (context) => ResidenceScreen(config: config),
         )) as Map<String, dynamic>;
     if (saveData != null) {
       saveData['author'] = widget.uuid;
@@ -163,6 +179,7 @@ class _MainScreenState extends State<MainScreen>
         default:
       }
     }
+
     return Scaffold(
       appBar: AppBar(title: Text("Your Items"), actions: <Widget>[
         // action button
@@ -202,12 +219,33 @@ class _MainScreenState extends State<MainScreen>
                     .where((d) => (d['items'] as String).contains(_searchText))
                     .toList()
                 : snapshot.data.documents;
+            final _stories = json.decode(config.data['stories']);
+            final _roomsOrdered = [];
+            _stories.keys.forEach((storey) => _stories[storey].forEach((room) =>
+                _roomsOrdered
+                    .add({'storey': storey, 'room': room, 'count': 0})));
+            _roomsOrdered.add({'storey': '???', 'room': '???', 'count': 0});
+            filteredDocuments.forEach((item) {
+              if (_stories.keys.contains(item['storey']) &&
+                  _stories[item['storey']].contains(item['room'])) {
+                final _roomIndex = _roomsOrdered.indexWhere((room) =>
+                    (room['storey'] == item['storey']) &&
+                    (room['room'] == item['room']));
+                _roomsOrdered[_roomIndex]['count']++;
+                (item as DocumentSnapshot).data['index'] = _roomIndex;
+              } else {
+                _roomsOrdered.last['count']++;
+                (item as DocumentSnapshot).data['index'] =
+                    _roomsOrdered.length - 1;
+              }
+            });
+            filteredDocuments.sort((a, b) => a['index'] - b['index']);
             return Column(children: [
               Container(
                   padding: const EdgeInsets.all(10.0),
                   child: TextField(
                     decoration: InputDecoration(
-                        hintText: "What item are you looking for?",
+                        hintText: "Which item are you looking for?",
                         prefixIcon: Icon(
                           Icons.search,
                           size: 28.0,
@@ -285,7 +323,11 @@ class _MainScreenState extends State<MainScreen>
             );
           }
           if ((snapshot.data.documents as List).isEmpty) {
-            return ResidenceScreen(initSetup: true, firestore: widget.firestore, uuid: widget.uuid,);
+            return ResidenceScreen(
+              initSetup: true,
+              firestore: widget.firestore,
+              uuid: widget.uuid,
+            );
             // return _wizardScaffold(context);
           } else {
             return _itemsScaffold(context, snapshot.data.documents[0]);

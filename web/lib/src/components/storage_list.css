@@ -1,0 +1,11 @@
+#storage-list {
+    padding: 80px 10px 10px 10px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.storage-list-item {
+    padding: 10px;
+    height: 100%;
+}

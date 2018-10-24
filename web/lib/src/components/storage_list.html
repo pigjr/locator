@@ -1,0 +1,29 @@
+<material-content>
+  <div id="storage-list">
+    <material-input type="text" label="Search" leadingGlyph="search" leadingGlyphAriaLabel="Search" [ngStyle]="{'display': 'contents'}" [(ngModel)]="searchText">
+      <material-icon trailing icon="clear" *ngIf="searchText != null && searchText.isNotEmpty" (click)="deleteSearchInput">
+      </material-icon>
+    </material-input>
+    <div bp="grid">
+      <div class="storage-list-item-wrapper" bp="6 4@md" *ngFor="let storage of dbService.messages | search:searchText">
+        <div class="mdc-card storage-list-item">
+          <!-- <div class="mdc-card__media mdc-card__media--16-9">
+            <h2 class="">{{storage.name}}</h2>
+            <h3 class="">{{storage.backgroundColor}}</h3>
+          </div> -->
+          <div class="">
+            <h2 class="">{{storage.storage}}</h2>
+            <h3 class="">{{storage.room}} {{storage.storey}}</h3>
+          </div>
+          <div class="">
+            <material-chips>
+              <material-chip *ngFor="let c of getItemChips(storage.items)" [value]="c" [removable]="false" [ngStyle]="{'color': storage.foregroundColor, 'background-color': storage.backgroundColor}"
+                displayNameRenderer>
+              </material-chip>
+            </material-chips>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</material-content>

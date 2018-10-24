@@ -1,0 +1,3 @@
+<expose-header></expose-header>
+<expose-login-button *ngIf="dbService.user == null"></expose-login-button>
+<expose-storage-list *ngIf="dbService.user != null"></expose-storage-list>

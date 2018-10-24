@@ -1,0 +1,11 @@
+<header class="material-header shadow">
+  <div class="material-header-row">
+    <img class="icon" src="./images/icon_logo.png">
+    <span class="material-header-title">Expose</span>
+    <div class="material-spacer"></div>
+    <div id="user-name">{{dbService.user?.displayName}}</div>
+    <nav class="material-navigation" *ngIf="dbService.user != null">
+      <material-button (trigger)="dbService.signOut()">Sign Out</material-button>
+    </nav>
+  </div>
+</header>

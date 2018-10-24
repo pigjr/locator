@@ -7,59 +7,66 @@ class LoginScreen extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   void _authenticateWithGoogle() async {
-    final GoogleSignInAccount googleUser = await _googleSignIn.signIn();
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
-    final FirebaseUser user = await _auth.signInWithGoogle(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-    // do something with signed-in user
+    try {
+      final GoogleSignInAccount googleUser = await _googleSignIn.signIn();
+      if (googleUser != null) {
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+        await _auth.signInWithGoogle(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+      }
+    } catch (e) {}
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text("Login")),
-        body: Center(
-          child: Text('Hello, world!'),
-        ),
-        floatingActionButton: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>[
-            FloatingActionButton(
-              tooltip: 'Login', // used by assistive technologies
-              child: Icon(Icons.desktop_windows),
-              onPressed: _authenticateWithGoogle,
-            ),
-            RaisedButton(
-              child: Text('Launch screen'),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SecondScreen()),
-                );
-              },
-            ),
-          ],
-        ));
-  }
-}
-
-class SecondScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Second Screen"),
-      ),
+      appBar: AppBar(title: Text("Welcome")),
       body: Center(
-        child: RaisedButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          child: Text('Go back!'),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Expanded(
+                flex: 1,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Image.asset(
+                      'lib/assets/icon_logo.png',
+                      width: 150.0,
+                      height: 150.0,
+                    ),
+                    Text(
+                      'Expose',
+                      style: TextStyle(
+                        fontSize: 24.0,
+                      ),
+                    ),
+                  ],
+                )),
+            Expanded(
+                flex: 1,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    RaisedButton.icon(
+                      color: Colors.white,
+                      onPressed: _authenticateWithGoogle,
+                      icon: Image.asset(
+                          'lib/assets/g-logo.png',
+                          width: 25.0,
+                        ),
+                        label: Text(
+                            "Sign in with Google",
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                            ),
+                          ),
+                    ),
+                ]))
+          ],
         ),
       ),
     );

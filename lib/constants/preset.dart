@@ -14,6 +14,11 @@ class Preset {
     'First Floor',
     'Basement',
   ];
+  final houseTypeIcons = {
+    'Condo/Apartment': 'lib/assets/icon_condo.png',
+    'One-story House': 'lib/assets/icon_one_storey.png',
+    'Two-story House': 'lib/assets/icon_two_storey.png'
+  };
   final houseTypes = {
     'Condo/Apartment': {
       'First Floor': [
