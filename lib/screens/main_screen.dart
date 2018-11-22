@@ -8,6 +8,8 @@ import './storage_screen.dart';
 import './residence_screen.dart';
 import '../constants/preset.dart';
 import '../utilities/string_to_color.dart' show stringToColor;
+import '../constants/localizations.dart' show ExposeLocalizations;
+import '../constants/enums.dart' show Actions;
 
 class MainScreen extends StatefulWidget {
   MainScreen({Key key, this.firestore, this.uuid}) : super(key: key);
@@ -47,23 +49,30 @@ class _MainScreenState extends State<MainScreen>
     await widget.firestore.signOut();
   }
 
-  Widget _buildChip(BuildContext context, String item, String room) {
+  Widget _buildChip(BuildContext context, String item, String room,
+      DocumentSnapshot document, DocumentSnapshot config) {
     final _colors = room != null
         ? stringToColor(room)
         : [Colors.lightGreenAccent, Colors.black];
-    return Container(
-        margin: EdgeInsets.only(right: 2.0),
-        child: Chip(
-          label: Text(
-            item,
-            style: TextStyle(color: _colors[1]),
-          ),
-          backgroundColor: _colors[0],
-        ));
+    return InkWell(
+      child: Container(
+          margin: EdgeInsets.only(right: 2.0),
+          child: Chip(
+            label: Text(
+              item,
+              style: TextStyle(color: _colors[1]),
+            ),
+            backgroundColor: _colors[0],
+          )),
+      onTap: () {
+        _navigateAndPushEditScreen(context, document, config,
+            showItemsTab: true);
+      },
+    );
   }
 
-  Widget _buildListItem(
-      BuildContext context, DocumentSnapshot document, config) {
+  Widget _buildListItem(BuildContext context, DocumentSnapshot document,
+      DocumentSnapshot config) {
     final List<String> items = (document['items'] as String).isNotEmpty
         ? document['items'].trim().split(RegExp(r"\|"))
         : [];
@@ -101,8 +110,8 @@ class _MainScreenState extends State<MainScreen>
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: items.length,
-                    itemBuilder: (context, index) =>
-                        _buildChip(context, items[index], document['room']),
+                    itemBuilder: (context, index) => _buildChip(context,
+                        items[index], document['room'], document, config),
                   ))
             ],
           ),
@@ -114,24 +123,51 @@ class _MainScreenState extends State<MainScreen>
     );
   }
 
-  _navigateAndPushEditScreen(BuildContext context, DocumentSnapshot document,
-      DocumentSnapshot config) async {
+  _navigateAndPushEditScreen(
+      BuildContext context, DocumentSnapshot document, DocumentSnapshot config,
+      {bool showItemsTab = false}) async {
     // Navigator.push returns a Future that will complete after we call
     // Navigator.pop on the Selection Screen!
     final saveData = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => StorageScreen(document: document, config: config),
+        builder: (context) => StorageScreen(
+            document: document, config: config, showItemsTab: showItemsTab),
       ),
     );
-    if (saveData != null) {
+    if (saveData == Actions.DELETE) {
+      final _snackBarDeleteSuccessful = SnackBar(
+        content: Text('Deleted'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            // Some code to undo the change!
+            Firestore.instance
+                .collection('items')
+                .document()
+                .setData(document.data);
+          },
+        ),
+      );
+      final _snackBarDeleteFailed = SnackBar(
+        content: Text('Delete failed'),
+      );
+      try {
+        await Firestore.instance
+            .collection('items')
+            .document(document.reference.documentID)
+            .delete();
+        Scaffold.of(context).showSnackBar(_snackBarDeleteSuccessful);
+      } catch (e) {
+        Scaffold.of(context).showSnackBar(_snackBarDeleteFailed);
+      }
+    } else if (saveData != null) {
       saveData['author'] = widget.uuid;
       await Firestore.instance
           .collection('items')
           .document(document.reference.documentID)
           .updateData(saveData);
     }
-    // Scaffold.of(context).showSnackBar(SnackBar(content: Text("$saveResult")));
   }
 
   _navigateAndPushPickScreen(
@@ -143,12 +179,10 @@ class _MainScreenState extends State<MainScreen>
         MaterialPageRoute(
           builder: (context) => StorageScreen(document: null, config: config),
         )) as Map<String, dynamic>;
-    // After the Selection Screen returns a result, show it in a Snackbar!
     if (saveData != null) {
       saveData['author'] = widget.uuid;
       await Firestore.instance.collection('items').document().setData(saveData);
     }
-    // Scaffold.of(context).showSnackBar(SnackBar(content: Text("$saveResult")));
   }
 
   _navigateAndPushResidenceScreen(
@@ -180,8 +214,9 @@ class _MainScreenState extends State<MainScreen>
       }
     }
 
+    final _l10n = ExposeLocalizations(Localizations.localeOf(context));
     return Scaffold(
-      appBar: AppBar(title: Text("Your Items"), actions: <Widget>[
+      appBar: AppBar(title: Text(_l10n.get('title')), actions: <Widget>[
         // action button
         IconButton(
           icon: Icon(Icons.home),
@@ -198,7 +233,7 @@ class _MainScreenState extends State<MainScreen>
                   value: "signOut",
                   child: ListTile(
                     leading: Icon(Icons.exit_to_app),
-                    title: Text('Sign out'),
+                    title: Text(_l10n.get('signOut')),
                   ))
             ];
           },
@@ -245,7 +280,7 @@ class _MainScreenState extends State<MainScreen>
                   padding: const EdgeInsets.all(10.0),
                   child: TextField(
                     decoration: InputDecoration(
-                        hintText: "Which item are you looking for?",
+                        hintText: _l10n.get('searchHint'),
                         prefixIcon: Icon(
                           Icons.search,
                           size: 28.0,
@@ -274,7 +309,7 @@ class _MainScreenState extends State<MainScreen>
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: <Widget>[
                             Icon(Icons.event_seat),
-                            Text("Whoa, such empty"),
+                            Text(_l10n.get('empty')),
                             Icon(Icons.event_seat),
                           ],
                         ))
@@ -295,7 +330,6 @@ class _MainScreenState extends State<MainScreen>
         // can refer to the Scaffold with Scaffold.of().
         builder: (BuildContext context) {
           return FloatingActionButton(
-            heroTag: "addStorage",
             child: Icon(
               Icons.add,
               color: Colors.white,

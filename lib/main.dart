@@ -6,6 +6,7 @@ import './screens/main_screen.dart' show MainScreen;
 // import './screens/camera_screen.dart';
 // import './screens/storage_screen.dart';
 // import 'package:camera/camera.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 // List<CameraDescription> cameras;
 
@@ -27,6 +28,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      localizationsDelegates: [
+        // ... app-specific localization delegate[s] here
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      supportedLocales: [
+        const Locale('en', 'US'), // English
+        const Locale('zh', 'CN'), // Chinese
+        // ... other locales the app supports
+      ],
       title: 'Expose',
       initialRoute: '/',
       routes: {

@@ -6,12 +6,18 @@ import 'dart:async';
 import 'dart:io';
 import '../widgets/unsaved_changes_alert.dart' show UnsavedChangesAlert;
 import '../utilities/string_to_color.dart' show stringToColor;
+import '../constants/enums.dart' show Actions;
 
 class StorageScreen extends StatefulWidget {
-  StorageScreen({Key key, @optionalTypeArgs this.document, this.config})
+  StorageScreen(
+      {Key key,
+      @optionalTypeArgs this.document,
+      this.config,
+      this.showItemsTab})
       : super(key: key);
   final DocumentSnapshot document;
   final DocumentSnapshot config;
+  final bool showItemsTab;
   @override
   _StorageScreenState createState() => _StorageScreenState();
 }
@@ -42,7 +48,6 @@ class _StorageScreenState extends State<StorageScreen>
 
   // Form text controllers
   final _storageController = TextEditingController();
-  // final _itemsController = TextEditingController();
 
   @override
   void initState() {
@@ -58,6 +63,9 @@ class _StorageScreenState extends State<StorageScreen>
     _storageController.text = _data['storage'];
     _addItemTextInputController.text = _addItemTextInputValue;
     _addItemTextInputController.addListener(_addItemTextInputListener);
+    if (widget.showItemsTab) {
+      _tabController.index = 4;
+    }
     return super.initState();
   }
 
@@ -82,50 +90,6 @@ class _StorageScreenState extends State<StorageScreen>
         @required Widget child,
         @optionalTypeArgs bool isFirst = false,
         @optionalTypeArgs bool isLast = false}) {
-      // final _previousButton = RaisedButton.icon(
-      //   color: Colors.lightGreen,
-      //   icon: const Icon(Icons.navigate_before, size: 18.0),
-      //   label: const Text('Previous'),
-      //   onPressed: () {
-      //     _tabController.animateTo(_tabController.index - 1);
-      //   },
-      // );
-      // final _nextButton = RaisedButton.icon(
-      //   color: Colors.lightGreen,
-      //   icon: const Icon(Icons.navigate_next, size: 18.0),
-      //   label: const Text('Next'),
-      //   onPressed: () {
-      //     _tabController.animateTo(_tabController.index + 1);
-      //   },
-      // );
-      // final _saveButton = RaisedButton.icon(
-      //   color: Colors.lightGreen,
-      //   icon: const Icon(Icons.save_alt, size: 18.0),
-      //   label: const Text('Save'),
-      //   onPressed: () {
-      //     int _index;
-      //     final _necessaryDataFields = ['storage', 'storey', 'room', 'items'];
-      //     for (var i = 0; i < 4; i++) {
-      //       if (!_data.containsKey(_necessaryDataFields[i]) ||
-      //           _data[_necessaryDataFields[i]].isEmpty) {
-      //         _index = i + 1;
-      //         break;
-      //       }
-      //     }
-      //     if (_index != null) {
-      //       showDialog(
-      //           context: context,
-      //           builder: (_) => AlertDialog(
-      //                 title: Text("Missing Input"),
-      //                 content: Text(
-      //                     "One or more fields are required. Please review before proceed"),
-      //               )).then((_) => _tabController.animateTo(_index));
-      //     } else {
-      //       Navigator.pop(context, _data);
-      //       _edited = false;
-      //     }
-      //   },
-      // );
       return Card(
           child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -135,15 +99,6 @@ class _StorageScreenState extends State<StorageScreen>
             Expanded(
               child: child,
             ),
-            // ButtonBar(
-            //   alignment: MainAxisAlignment.center,
-            //   mainAxisSize: MainAxisSize.max,
-            //   children: isFirst
-            //       ? [_nextButton, _saveButton]
-            //       : (isLast
-            //           ? [_previousButton, _saveButton]
-            //           : [_previousButton, _nextButton, _saveButton]),
-            // ),
           ]));
     }
 
@@ -219,7 +174,8 @@ class _StorageScreenState extends State<StorageScreen>
                   _edited = true;
                   _items.remove(item);
                   setState(() {
-                    _data['items'] = _items.join('|');
+                    _data['items'] =
+                        _items.length > 0 ? _items.join('|') : null;
                   });
                 })))
         .toList();
@@ -285,8 +241,9 @@ class _StorageScreenState extends State<StorageScreen>
               if (value != null) {
                 // value is null when dismissed
                 _edited = true;
-                if ((value as String).contains(',')) {
-                  final _itemsToAdd = (value as String).split(',');
+                final RegExp _commaPattern = RegExp(r'(,|，)');
+                if ((value as String).contains(_commaPattern)) {
+                  final _itemsToAdd = (value as String).split(_commaPattern);
                   _itemsToAdd.forEach((item) => item.trim());
                   _itemsToAdd
                       .removeWhere((item) => (item == null) || (item == ''));
@@ -338,41 +295,40 @@ class _StorageScreenState extends State<StorageScreen>
                     ),
                   ])
             : Container(
-                constraints: BoxConstraints.loose(Size.square(250.0)),
+                constraints: BoxConstraints.loose(Size.square(300.0)),
                 decoration: BoxDecoration(
                   image: DecorationImage(
                     image: FileImage(_image),
                     fit: BoxFit.fitWidth,
                   ),
                 ),
-                alignment: AlignmentDirectional.bottomCenter,
+                alignment: AlignmentDirectional.center,
                 child: Stack(
                   children: <Widget>[
-                    Positioned(
-                        right: 0.0,
-                        bottom: 30.0,
-                        child: FloatingActionButton(
-                          backgroundColor: _colors[0],
-                          foregroundColor: _colors[1],
-                          mini: true,
-                          child: Icon(Icons.delete),
-                          onPressed: () => setState(() {
-                                _image = null;
-                              }),
-                        )),
+                    FloatingActionButton(
+                      backgroundColor: _colors[0],
+                      foregroundColor: _colors[1],
+                      mini: true,
+                      child: Icon(Icons.delete),
+                      onPressed: () => setState(() {
+                            _image = null;
+                          }),
+                    ),
                   ],
-                )
-                // Row(
-                //   mainAxisAlignment: MainAxisAlignment.center,
-                //   children: <Widget>[
-
-                //   ],
-                // )
-                ));
+                )));
 
     final _scaffold = Scaffold(
       appBar: AppBar(
           title: Text(_data['storage'] ?? 'Storage'),
+          actions: <Widget>[
+            // action button
+            IconButton(
+              icon: Icon(Icons.delete_forever),
+              onPressed: () {
+                Navigator.pop(context, Actions.DELETE);
+              },
+            )
+          ],
           bottom: TabBar(
             controller: _tabController,
             isScrollable: true,
