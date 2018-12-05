@@ -1,21 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-// import './screens/dummy_screen.dart';
 import './screens/login_screen.dart' show LoginScreen;
 import './screens/main_screen.dart' show MainScreen;
-// import './screens/camera_screen.dart';
-// import './screens/storage_screen.dart';
-// import 'package:camera/camera.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-// List<CameraDescription> cameras;
-
 void main() async {
-  // try {
-  //   cameras = await availableCameras();
-  // } on CameraException catch (e) {
-  //   logError(e.code, e.description);
-  // }
   runApp(MyApp());
 }
 

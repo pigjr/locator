@@ -21,7 +21,7 @@ packages:
       name: camera
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.4"
+    version: "0.2.6"
   charcode:
     dependency: transitive
     description:
@@ -35,7 +35,7 @@ packages:
       name: cloud_firestore
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.7.4"
+    version: "0.8.2+3"
   collection:
     dependency: transitive
     description:
@@ -56,7 +56,7 @@ packages:
       name: firebase_auth
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.5.20"
+    version: "0.6.6"
   firebase_core:
     dependency: transitive
     description:
